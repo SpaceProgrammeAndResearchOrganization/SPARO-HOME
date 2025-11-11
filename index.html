@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <link rel="icon" type="image/png" href="icon.png">
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SPARO</title>
+    <style>
+        /* BASE STYLES */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Courier New', monospace;
+            background: #1a1512;
+            color: #f4e4c1;
+            overflow-x: hidden;
+        }
+        
+        /* --- THE ACCESS GATE (SPLASH SCREEN) --- */
+        #splash-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: #1a1a1a;
+            color: #d27d2c;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            z-index: 9999;
+            transition: opacity 1s ease-out;
+            opacity: 3;
+        }
+
+        #splash-screen.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .system-title {
+            font-size: 3rem;
+            letter-spacing: 0.5rem;
+            margin-bottom: 1.5rem;
+            text-shadow: 0 0 25px rgba(210, 125, 44, 0.8);
+            animation: pulse 0.5s infinite alternate;
+        }
+        
+        .system-status {
+            font-size: 1.2rem;
+            margin-bottom: 3rem;
+            opacity: 0.8;
+        }
+
+        @keyframes pulse {
+            from { opacity: 0.8; }
+            to { opacity: 1; }
+        }
+
+        .access-btn {
+            padding: 1.5rem 4rem;
+            font-size: 1.5rem;
+            font-family: 'Courier New', monospace;
+            background: linear-gradient(135deg, #d27d2c 0%, #8b4513 100%);
+            color: #1a1a1a;
+            border: 3px solid #f4e4c1;
+            border-radius: 5px;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 0.2rem;
+            font-weight: bold;
+            transition: all 0.3s;
+            box-shadow: 0 0 30px rgba(210, 125, 44, 0.7);
+        }
+
+        .access-btn:hover {
+            transform: scale(1.05);
+            background: linear-gradient(135deg, #f4a460 0%, #d27d2c 100%);
+        }
+
+        /* --- MAIN CONTENT CONTAINER --- */
+        #main-content {
+            opacity: 0;
+            transition: opacity 1s ease-in;
+        }
+        
+        #main-content.active {
+            opacity: 1;
+        }
+
+        /* --- VIDEO BACKGROUND --- */
+        .video-background {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: 0;
+            overflow: hidden;
+            background: #000;
+        }
+
+        .video-background::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(26, 26, 26, 0.6); 
+            z-index: 1;
+        }
+
+        .video-background iframe {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 100vw;
+            height: 56.25vw; 
+            min-height: 100vh;
+            min-width: 177.77vh; 
+            transform: translate(-50%, -50%);
+            z-index: 0;
+            pointer-events: none; 
+        }
+        
+        /* --- SCANLINE & FLICKER --- */
+        .scanline-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1; 
+            background: linear-gradient(
+                rgba(0, 0, 0, 0) 50%,
+                rgba(0, 0, 0, 0.25) 50%
+            );
+            background-size: 100% 4px;
+            opacity: 0.3;
+            pointer-events: none;
+            animation: flicker 0.15s infinite;
+        }
+
+        @keyframes flicker {
+            0% { opacity: 0.25; }
+            50% { opacity: 0.35; }
+            100% { opacity: 0.25; }
+        }
+
+        /* --- CONTENT STYLES --- */
+        .content {
+            position: relative;
+            z-index: 2; 
+        }
+
+        header { 
+            padding: 2rem; 
+            text-align: center; 
+            background: linear-gradient(180deg, rgba(210, 125, 44, 0.1) 0%, transparent 100%); 
+            border-bottom: 2px solid #d27d2c; 
+        }
+
+        /* NEW STYLE: Centers the company name/tagline without the logo */
+        .company-header-content {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* DELETED: .logo-container, .logo, .logo::before styles */
+
+        .company-name { 
+            font-size: 3rem; 
+            letter-spacing: 0.3rem; 
+            color: #d27d2c; 
+            text-shadow: 0 0 20px rgba(210, 125, 44, 0.7); 
+            margin-bottom: 0.5rem; /* Added margin for separation */
+        }
+        .tagline { 
+            color: #f4e4c1; 
+            font-size: 1.1rem; 
+            letter-spacing: 0.2rem; 
+            opacity: 0.9; 
+        }
+        
+        main { max-width: 1200px; margin: 0 auto; padding: 4rem 2rem; }
+        .hero-section { text-align: center; margin-bottom: 4rem; background: rgba(26, 26, 26, 0.8); padding: 3rem; border: 2px solid #d27d2c; border-radius: 10px; box-shadow: 0 0 40px rgba(210, 125, 44, 0.3); }
+        .hero-section h2 { font-size: 2.5rem; color: #d27d2c; margin-bottom: 1.5rem; text-transform: uppercase; letter-spacing: 0.2rem; }
+        .hero-section p { font-size: 1.2rem; line-height: 1.8; color: #f4e4c1; max-width: 800px; margin: 0 auto; }
+        .image-gallery { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 2rem; margin: 4rem 0; }
+        .image-card { background: rgba(26, 26, 26, 0.9); border: 2px solid #d27d2c; border-radius: 10px; overflow: hidden; transition: transform 0.3s, box-shadow 0.3s; cursor: pointer; }
+        .image-card:hover { transform: translateY(-10px); box-shadow: 0 10px 40px rgba(210, 125, 44, 0.5); }
+        
+        .image-placeholder {
+            width: 100%;
+            height: 200px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .image-placeholder img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.5s ease;
+        }
+
+        .image-card:hover .image-placeholder img {
+            transform: scale(1.05);
+        }
+
+        .image-caption { padding: 1.5rem; text-align: center; color: #f4e4c1; font-size: 1.1rem; }
+        .about-section { background: rgba(26, 26, 26, 0.8); padding: 3rem; border: 2px solid #d27d2c; border-radius: 10px; margin-bottom: 4rem; line-height: 1.8; }
+        .about-section h3 { font-size: 2rem; color: #d27d2c; margin-bottom: 1.5rem; text-transform: uppercase; letter-spacing: 0.15rem; }
+        .about-section p { margin-bottom: 1rem; color: #f4e4c1; font-size: 1.1rem; }
+        footer { background: rgba(26, 26, 26, 0.95); border-top: 2px solid #d27d2c; padding: 3rem 2rem; text-align: center; }
+        .division-buttons { display: flex; gap: 2rem; justify-content: center; flex-wrap: wrap; margin-bottom: 2rem; }
+        .division-btn { padding: 1.5rem 3rem; font-size: 1.3rem; font-family: 'Courier New', monospace; background: linear-gradient(135deg, #d27d2c 0%, #8b4513 100%); color: #1a1a1a; border: 3px solid #f4e4c1; border-radius: 5px; cursor: pointer; text-transform: uppercase; letter-spacing: 0.15rem; font-weight: bold; transition: all 0.3s; text-decoration: none; display: inline-block; box-shadow: 0 5px 20px rgba(210, 125, 44, 0.4); }
+        .division-btn:hover { transform: translateY(-5px); box-shadow: 0 10px 40px rgba(210, 125, 44, 0.7); background: linear-gradient(135deg, #f4a460 0%, #d27d2c 100%); }
+        .footer-text { color: #f4e4c1; opacity: 0.7; margin-top: 2rem; font-size: 0.9rem; }
+        @media (max-width: 768px) { .company-name { font-size: 2rem; } .hero-section h2 { font-size: 1.8rem; } .division-btn { padding: 1rem 2rem; font-size: 1.1rem; } }
+    </style>
+</head>
+<body>
+
+    <div id="splash-screen">
+        <h2 class="system-title">SPARO ACCESS SYSTEM V.1.2</h2>
+        <p class="system-status">[ STATUS: INITIALIZING - AWAITING USER COMMAND ]</p>
+        <button class="access-btn" onclick="startExperience()">ACCESS SYSTEM</button>
+    </div>
+
+    <audio id="background-audio" loop>
+        <source src="sparo.mp3" type="audio/mpeg">
+        Your browser does not support the audio element.
+    </audio>
+
+    <div id="main-content">
+        
+        <div class="video-background">
+            <iframe
+                id="bg-video-iframe"
+                src="https://www.youtube-nocookie.com/embed/71a5rSUkN68?autoplay=0&mute=1&loop=1&playlist=71a5rSUkN68&controls=0&rel=0&enablejsapi=1"
+                frameborder="0"
+                allow="autoplay; encrypted-media; gyroscope; picture-in-picture"
+                allowfullscreen
+                referrerpolicy="strict-origin-when-cross-origin"
+            ></iframe>
+        </div>
+
+        <div class="scanline-overlay"></div>
+        
+        <div class="content">
+            <header>
+                <div class="company-header-content"> 
+                    <h1 class="company-name">SPACE PROGRAMME AND RESEARCH ORGANIZATION</h1>
+                    <p class="tagline">Stay curious.Stay Bold.Stay with SPARO</p>
+                </div>
+            </header>
+
+            <main>
+                <section class="hero-section">
+                    <h2>Pioneering Tomorrow's Universe</h2>
+                    <p>At SPARO, we don't just explore space—we redefine humanity's relationship with the cosmos. Through cutting-edge technology and unwavering determination, we're charting courses to distant worlds and unlocking the secrets of the universe.</p>
+                </section>
+
+                <div class="image-gallery">
+                    <div class="image-card">
+                        <div class="image-placeholder">
+                            <img src="image1.jpg?v=2" alt="Next-Gen Spacecraft">
+                        </div>
+                        <div class="image-caption">Next-Gen Spacecraft</div>
+                    </div>
+                    <div class="image-card">
+                        <div class="image-placeholder">
+                            <img src="image2.jpg?v=2" alt="Deep Space Exploration">
+                        </div>
+                        <div class="image-caption">Deep Space Exploration</div>
+                    </div>
+                    <div class="image-card">
+                        <div class="image-placeholder">
+                            <img src="image3.jpg?v=2" alt="Advanced Propulsion Systems">
+                        </div>
+                        <div class="image-caption">Advanced Propulsion Systems</div>
+                    </div>
+                </div>
+
+                <section class="about-section">
+                    <h3>About Us</h3>
+                    <p>Founded in the spirit of boundless exploration, SPARO stands at the forefront of space innovation. Our mission transcends traditional boundaries, merging scientific rigor with visionary ambition.</p>
+                    <p>We operate across two primary divisions: our Space & Research Division pushes the boundaries of what's possible in aerospace technology, while our Entertainment Division brings the wonder of space to audiences worldwide.</p>
+                    <p>With a team of brilliant minds from across the globe, we're not just reaching for the stars—we're building the bridge that will take humanity there.</p>
+                </section>
+            </main>
+
+            <footer>
+                <div class="division-buttons">
+                    <a href="https://www.nasa.gov" target="_blank" class="division-btn">Space & Research</a>
+                    <a href="https://sparo-tv.netlify.app/" target="_blank" class="division-btn">SPARO-TV+</a>
+                </div>
+                <p class="footer-text">© 2025 SPARO | SPARO is not a registered company for now. |This is a experimental website.</p>
+            </footer>
+        </div>
+    </div>
+
+    <script>
+        // Function called when the user clicks the "ACCESS SYSTEM" button
+        function startExperience() {
+            const splashScreen = document.getElementById('splash-screen');
+            const mainContent = document.getElementById('main-content');
+            const audio = document.getElementById('background-audio');
+            const iframe = document.getElementById('bg-video-iframe');
+
+            // 1. Play the BGM (Unmuted, using the user's click)
+            audio.play().catch(e => {
+                console.error("Audio playback failed (browser may still be blocking):", e);
+            });
+
+            // 2. Unmute and Autoplay the YouTube video
+            let videoSrc = iframe.src;
+            
+            // a. Replace existing parameters to ensure autoplay=1 and mute=0
+            videoSrc = videoSrc.replace('autoplay=0', 'autoplay=1').replace('mute=1', 'mute=1');
+            
+            // b. Start the video unmuted
+            iframe.src = videoSrc;
+
+            // 3. Fade out the splash screen and show content
+            splashScreen.classList.add('hidden');
+            mainContent.classList.add('active');
+
+            // 4. Remove splash screen from DOM after transition
+            setTimeout(() => {
+                splashScreen.remove();
+            }, 1000); 
+        }
+    </script>
+</body>
+</html>
